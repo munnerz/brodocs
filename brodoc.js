@@ -1,10 +1,17 @@
-const docFolder = './documents/';
 const fs = require('fs');
 const marked = require('marked');
 const highlight = require('highlight.js');
 const renderer = new marked.Renderer();
 const brodocDec = require('./markedDecorations.js');
 
+var args = process.argv.slice(2);
+if(args.length < 3) {
+    console.log("Usage: 'node brodoc.js <manifest-path> <includes-dir> <output-dir>'");
+    process.exit(1);
+}
+const manifestPath = args[0];
+const docFolder = args[1];
+const outputDir = args[2];
 
 marked.setOptions({
     renderer: renderer,
@@ -21,7 +28,7 @@ marked.setOptions({
 });
 brodocDec.decorateMarked(renderer);
 
-var config = require('./manifest');
+var config = require(manifestPath);
 var docs = config.docs;
 
 var files = [];
@@ -44,7 +51,7 @@ var fIndex = 0;
 var rIndex = 0;
 var fileObj = {toc: [], content: [], tabs: []};
 fileArray.forEach((file, index) => {
-    fs.readFile(path + file.filename, 'utf8', (err, data) => {
+    fs.readFile(path + "/" + file.filename, 'utf8', (err, data) => {
         rIndex++;
         file.content = data;
 
@@ -154,7 +161,7 @@ function generateNestedNav(parent, nest) {
 function generateNavJson(data) {
     var navJson = JSON.stringify(data);
     navScript = `(function(){navData = ${navJson};})();`;
-    fs.writeFile('./navData.js', navScript, function(err) {
+    fs.writeFile(outputDir+'/navData.js', navScript, function(err) {
         if (err) {
             return console.log(err);
         }
@@ -202,7 +209,7 @@ function generateDoc(navContent, bodyContent, codeTabContent) {
 <script src="tabvisibility.js"></script>
 </body>
 </html>`;
-    fs.writeFile('./index.html', doc, function (err) {
+    fs.writeFile(outputDir+'/index.html', doc, function (err) {
         if (err) {
             return console.log(err);
         }
